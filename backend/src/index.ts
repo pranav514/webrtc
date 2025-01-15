@@ -4,7 +4,7 @@
 // - create answer -> send to the sender socket
 // ice candidate  -> exchanges among the sender and reciver
 
-import { WebSocket } from 'ws';
+import { WebSocket } from "ws";
 let senderSocket: WebSocket | null = null;
 let reciverSocket: WebSocket | null = null;
 
@@ -15,13 +15,16 @@ wss.on("connection", (ws) => {
   ws.on("message", (data: any) => {
     const messages = JSON.parse(data);
     if (messages.type === "sender") {
+      console.log("sender set");
       senderSocket = ws;
     } else if (messages.type === "reciver") {
+      console.log("reciver set");
       reciverSocket = ws;
     } else if (messages.type === "createOffer") {
       if (ws !== senderSocket) {
         return;
       }
+      console.log("offer created");
       reciverSocket?.send(
         JSON.stringify({ type: "createOffer", sdp: messages.sdp })
       );
@@ -29,18 +32,21 @@ wss.on("connection", (ws) => {
       if (ws !== reciverSocket) {
         return;
       }
+      console.log("anwer created");
       senderSocket?.send(
         JSON.stringify({ type: "createAnswer", sdp: messages.sdp })
       );
     } else if (messages.type === "iceCandidate") {
       if (ws === senderSocket) {
-        reciverSocket?.send(
+        console.log("ice candidate from sender");
+        reciverSocket?.send( 
           JSON.stringify({
             type: "iceCandidate",
             candidate: messages.candidate,
           })
         );
       } else if (ws === reciverSocket) {
+        console.log("ice candidate from reciver");
         senderSocket?.send(
           JSON.stringify({
             type: "iceCandidate",
