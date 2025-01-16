@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 function Reciver() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [pc, setPC] = useState<RTCPeerConnection | null>(null);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:8080");
     // setSocket(socket)
@@ -19,6 +20,11 @@ function Reciver() {
         const pc = new RTCPeerConnection();
         setPC(pc);
         pc.setRemoteDescription(message.sdp);
+        pc.ontrack = (event) => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = new MediaStream([event.track]);
+          }
+        };
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         pc.onicecandidate = (event) => {
@@ -29,6 +35,7 @@ function Reciver() {
             })
           );
         };
+
         socket.send(
           JSON.stringify({
             type: "createAnswer",
@@ -45,7 +52,11 @@ function Reciver() {
     setSocket(socket);
   }, []);
 
-  return <div>Reciver</div>;
+  return (
+    <div>
+      <video ref={videoRef}></video>
+    </div>
+  );
 }
 
 export default Reciver;
